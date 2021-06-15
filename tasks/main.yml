@@ -1,0 +1,36 @@
+---
+# tasks file for ansible-role-docker
+# tasks file for ansible-role-k8s_prereq
+- name: Setting OS version fact
+  set_fact:
+    osversion: "{{ ansible_distribution | lower }}{{ ansible_distribution_major_version }}"
+
+- name: Check OS version
+  fail:
+    msg: "OS Version( {{ ansible_distribution }}{{ ansible_distribution_major_version }} ) is not certified for the role"
+  when:
+    - osversion != "centos7"
+
+- name: Add Docker Repository
+  get_url:
+    url: https://download.docker.com/linux/centos/docker-ce.repo
+    dest: /etc/yum.repos.d/docker-ce.repo
+  
+- name: Install latest version of Docker Engine
+  yum:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+  
+- name: Add user to docker group
+  user:
+    name: "{{ user }}"
+    groups: docker
+    append: yes
+
+- name: Enable and start docker
+  service:
+    name: docker
+    state: started
+    enabled: yes
